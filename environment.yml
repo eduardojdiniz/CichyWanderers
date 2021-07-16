@@ -1,0 +1,14 @@
+name: CichyWanderers
+
+channels:
+
+dependencies:
+    - numpy
+    - matplotlib
+    - scipy
+    - scikit-learn
+    - requests
+    - h5py
+    - pip
+    - pip:
+        - opencv-python
