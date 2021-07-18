@@ -1,14 +1,23 @@
 name: CichyWanderers
 
 channels:
+    - nvidia
+    - pytorch
 
 dependencies:
+    - python=3.8
     - numpy
+    - pytorch
+    - torchvision
+    - torchaudio
+    - cudatoolkit=11.1
     - matplotlib
     - scipy
     - scikit-learn
     - requests
     - h5py
+    - tqdm
     - pip
     - pip:
         - opencv-python
+        - Pillow
