@@ -7,10 +7,6 @@ tmp/
 data/
 models/
 
-################
-###  Python  ###
-################
-
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -140,10 +136,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-
-###############
-###    R    ###
-###############
+.Rproj.user
 
 # History files
 .Rhistory
