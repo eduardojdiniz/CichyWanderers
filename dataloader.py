@@ -49,12 +49,12 @@ def download_Cichy(**kwargs):
     Returns
     -------
     path_dict: dict
-    'fMRI' : str, fMRI filepath
-    'MEG'  : str, MEG filepath
-    'label': str, visual stimuli filepath
-    'image': str, jpeg images dirpath
-    'data' : str, data dirpath
-    'tmp'  : str, temporary data dirpath
+    'fMRI'      : str, fMRI filepath
+    'MEG'       : str, MEG filepath
+    'label'     : str, visual stimuli filepath
+    'image'     : str, jpeg images dirpath
+    'data'      : str, data dirpath
+    'tmp'       : str, temporary data dirpath
 
     """
     cwd = os.getcwd()
@@ -76,30 +76,35 @@ def download_Cichy(**kwargs):
         os.makedirs(tmp_dirpath)
 
     # Download MEG and fMRI RDMs
-    r = requests.get(data_url)
-    with open(data_filepath, 'wb') as f:
-        f.write(r.content)
+    if not os.path.exists(data_filepath):
+        r = requests.get(data_url)
+        with open(data_filepath, 'wb') as f:
+            f.write(r.content)
 
     # Download visual stimuli
-    r = requests.get(label_url)
-    with open(label_filepath, 'wb') as f:
-        f.write(r.content)
+    if not os.path.exists(label_filepath):
+        r = requests.get(label_url)
+        with open(label_filepath, 'wb') as f:
+            f.write(r.content)
 
     # Extract directory '92_Image_Set' and 'MEG_decoding_RDMs.mat'
-    with zipfile.ZipFile(data_filepath, 'r') as zip_file:
-        zip_file.extractall(tmp_dirpath)
+    tmp_image_dirpath = os.path.join(tmp_dirpath, '92_Image_Set', '92images')
+    if not os.path.exists(tmp_image_dirpath):
+        with zipfile.ZipFile(data_filepath, 'r') as zip_file:
+            zip_file.extractall(tmp_dirpath)
 
     # Move image files to permanent directory
-    tmp_image_dirpath = os.path.join(tmp_dirpath, '92_Image_Set', '92images')
     image_dirpath = os.path.join(cwd, 'data', 'images')
     if not os.path.exists(image_dirpath):
         os.makedirs(image_dirpath)
-
-    for f in os.listdir(tmp_image_dirpath):
-        shutil.copy(os.path.join(tmp_image_dirpath, f), image_dirpath)
+        for f in os.listdir(tmp_image_dirpath):
+            shutil.copy(os.path.join(tmp_image_dirpath, f), image_dirpath)
 
     path_dict = {}
-    fMRI_filepath = os.path.join(tmp_dirpath, '92_Image_Set', 'target_fmri.mat')
+    fMRI_filepath = os.path.join(
+        tmp_dirpath,
+        '92_Image_Set',
+        'target_fmri.mat')
     path_dict['fMRI'] = fMRI_filepath
     path_dict['MEG'] = os.path.join(tmp_dirpath, 'MEG_decoding_RDMs.mat')
     path_dict['label'] = label_filepath
@@ -116,12 +121,12 @@ def get_stim_dict(**kwargs):
     Parameters
     ----------
     kwargs: dict
-    'fMRI' : str, fMRI filepath
-    'MEG'  : str, MEG filepath
-    'label': str, visual stimuli filepath
-    'image': str, jpeg images dirpath
-    'data' : str, data dirpath
-    'tmp'  : str, temporary data dirpath
+    'fMRI'      : str, fMRI filepath
+    'MEG'       : str, MEG filepath
+    'label'     : str, visual stimuli filepath
+    'image'     : str, jpeg images dirpath
+    'data'      : str, data dirpath
+    'tmp'       : str, temporary data dirpath
 
     Returns
     -------
@@ -146,7 +151,7 @@ def get_stim_dict(**kwargs):
             stim_dict[field].append(stim_dat[0, ii][jj][0])
     for field in fields[1:]:
         stim_dict[field] = np.array(stim_dict[field]).squeeze()
-    stim_dict['imagepath'] = glob.glob(image_dirpath + '/*.jpg').sort()
+    stim_dict['imagepath'] = sorted(glob.glob(image_dirpath + '/*.jpg'))
 
     return stim_dict
 
@@ -157,12 +162,12 @@ def get_RDM_dict(**kwargs):
     Parameters
     ----------
     kwargs: dict
-    'fMRI' : str, fMRI filepath
-    'MEG'  : str, MEG filepath
-    'label': str, visual stimuli filepath
-    'image': str, jpeg images dirpath
-    'data' : str, data dirpath
-    'tmp'  : str, temporary data dirpath
+    'fMRI'      : str, fMRI filepath
+    'MEG'       : str, MEG filepath
+    'label'     : str, visual stimuli filepath
+    'image'     : str, jpeg images dirpath
+    'data'      : str, data dirpath
+    'tmp'       : str, temporary data dirpath
 
     Returns
     -------
@@ -198,6 +203,7 @@ def get_RDM_dict(**kwargs):
 
     return RDM_dict
 
+
 def save_dataset(**kwargs):
     """Save RDM_dict and stim_dict
 
@@ -215,53 +221,91 @@ def save_dataset(**kwargs):
 
     Returns
     -------
-    data_dirpath: str, data directory containing the pickle files with the two
-    dictionaries, stim_dict.pkl and RDM_dict.pkl. See help(get_stim_dict) and
-    help(get_RDM_dict) for details.
+    path_dict: dict
+    'RDM.pickle'  : str, RDM dict, pickled
+    'stim.pickle' : str, stim dict, pickled
+    'label'       : str, visual stimuli filepath
+    'image'       : str, jpeg images dirpath
+    'data'        : str, data dirpath
+    'tmp'         : str, temporary data dirpath
 
     """
 
-    data_dirpath = kwargs.pop('data', '')
     RDM_dict = kwargs.pop('RDM', '')
     stim_dict = kwargs.pop('stim', '')
+    path_dict = kwargs.copy()
+    data_dirpath = path_dict['data']
 
     stim_dict_pickle = os.path.join(data_dirpath, 'stim_dict.pkl')
     RDM_dict_pickle = os.path.join(data_dirpath, 'RDM_dict.pkl')
 
     with open(stim_dict_pickle, 'wb') as pkl:
         pickle.dump(stim_dict, pkl)
+        path_dict['stim.pickle'] = RDM_dict_pickle
 
     with open(RDM_dict_pickle, 'wb') as pkl:
         pickle.dump(RDM_dict, pkl)
+        path_dict['RDM.pickle'] = RDM_dict_pickle
 
-    return data_dirpath
+    return path_dict
 
-def load_dataset(data_dirpath='./data'):
+
+def load_dataset(**kwargs):
     """Load RDM_dict and stim_dict
 
     Parameters
     ----------
-    data_dirpath : str, location of the pickle files
+    path_dict: dict
+    'RDM.pickle'  : str, RDM dict, pickled (if save=True)
+    'stim.pickle' : str, stim dict, pickled (if save=True)
+    'image'       : str, jpeg images dirpath
+    'data'        : str, data dirpath
 
     Returns
     -------
+    path_dict: dict
+    'RDM.pickle'  : str, RDM dict, pickled (if save=True)
+    'stim.pickle' : str, stim dict, pickled (if save=True)
+    'image'       : str, jpeg images dirpath
+    'data'        : str, data dirpath
+
     RDM_dict  : dict, see help(get_RDM_dict)
+
     stim_dict : dict, see help(get_stim_dict)
 
     """
 
-    stim_dict_pickle = os.path.join(data_dirpath, 'stim_dict.pkl')
-    RDM_dict_pickle = os.path.join(data_dirpath, 'RDM_dict.pkl')
+    path_dict = {}
+
+    # Get data directory path
+    data_dirpath = kwargs.pop('data', './data')
+    path_dict['data'] = data_dirpath
+
+    # Load stimuli dictionary
+    stim_dict_pickle = kwargs.pop('stim.pickle', None)
+    if stim_dict_pickle is None:
+        stim_dict_pickle = os.path.join(data_dirpath, 'stim_dict.pkl')
+
+    # Load RDM dictionary
+    RDM_dict_pickle = kwargs.pop('RDM.pickle', None)
+    if RDM_dict_pickle is None:
+        RDM_dict_pickle = os.path.join(data_dirpath, 'RDM_dict.pkl')
 
     with open(stim_dict_pickle, 'rb') as pkl:
         stim_dict = pickle.load(pkl)
+        path_dict['stim.pickle'] = stim_dict_pickle
 
     with open(RDM_dict_pickle, 'rb') as pkl:
         RDM_dict = pickle.load(pkl)
+        path_dict['RDM.pickle'] = RDM_dict_pickle
 
-    return RDM_dict, stim_dict
+    # Set image directory path
+    path_dict = kwargs.pop('image', os.path.join(data_dirpath, 'images'))
 
-def create_dataset(save=True):
+    return path_dict, RDM_dict, stim_dict
+
+
+def create_dataset(save=True, clean=False):
     """Download and organize Cichy et al, 2014 dataset
 
     Parameters
@@ -270,11 +314,14 @@ def create_dataset(save=True):
 
     Returns
     -------
-    data_dirpath: str, data directory containing an image directory with the 92
-    visual stimuli and a pickle files containing the two dictionaries,
-    stim_dict.pkl and RDM_dict.pkl. See help(get_stim_dict) and
-    help(get_RDM_dict) for details.
+    path_dict: dict
+    'RDM.pickle'  : str, RDM dict, pickled (if save=True)
+    'stim.pickle' : str, stim dict, pickled (if save=True)
+    'image'       : str, jpeg images dirpath
+    'data'        : str, data dirpath
+
     RDM_dict  : dict, see help(get_RDM_dict)
+
     stim_dict : dict, see help(get_stim_dict)
 
     """
@@ -292,17 +339,19 @@ def create_dataset(save=True):
 
     # Pickle RDM and stimuli dictionaries
     if save:
-        data_dict = {'RDM': RDM_dict, 'stim': stim_dict }
-        data_dirpath = save_dataset(**path_dict, **data_dict)
+        data_dict = {'RDM': RDM_dict, 'stim': stim_dict}
+        path_dict = save_dataset(**path_dict, **data_dict)
 
-    # Clean temporary directory
-    shutil.rmtree(path_dict['tmp'])
+    # Clean temporary directory and path_dict
+    tmp_dirpath = path_dict.pop('tmp', '')
+    _ = path_dict.pop('label', '')
+    if clean:
+        shutil.rmtree(tmp_dirpath)
 
-    return data_dirpath, RDM_dict, stim_dict
+    return path_dict, RDM_dict, stim_dict
 
 
 if __name__ == "__main__":
-    data_dirpath, RDM_dict, stim_dict  = create_dataset()
-    #RDM_dict, stim_dict = load_data()
-    print(RDM_dict['MEG'].shape)
-    print(stim_dict.keys())
+    data_dirpath, RDM_dict, stim_dict = create_dataset()
+    # print(RDM_dict['MEG'].shape)
+    # print(stim_dict.keys())

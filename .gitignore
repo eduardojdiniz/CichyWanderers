@@ -2,8 +2,10 @@
 ###   Repo   ###
 ################
 
+set_permission.sh
+tmp/
 data/
-model/
+models/
 
 ################
 ###  Python  ###
