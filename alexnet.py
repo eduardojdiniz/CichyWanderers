@@ -6,7 +6,6 @@ import os
 import glob
 import numpy as np
 import torch
-from torch.autograd import Variable as V
 import torch.nn as nn
 import torch.utils.model_zoo as model_zoo
 from torchvision import transforms as trn
@@ -202,7 +201,8 @@ def get_alexnet_activations_and_save(model, **kwargs):
         img_filename = os.path.split(image_file)[-1].split(".")[0]
 
         # apply transformations before feeding to model
-        input_img = V(resize_normalize(img).unsqueeze(0))
+        input_img = torch.Tensor(resize_normalize(img).unsqueeze(0),
+                                 requires_grad=True)
         if torch.cuda.is_available():
             input_img = input_img.cuda()
         x = model.forward(input_img)
@@ -355,7 +355,7 @@ def create_alexnet_RDM_dict(**kwargs):
     alexnet_model_dirpath = os.path.join(cwd, 'models', 'alexnet')
 
     # load Alexnet initialized with pretrained weights
-    model = load_alexnet(pretrained=True, custom_keys=True,
+    model = load_alexnet(pretrained=pretrained, custom_keys=custom_keys,
                          ckpth_urls=ckpth_urls, ckpth=ckpth_filepath, **kwargs)
 
     # get and save activations
@@ -372,8 +372,8 @@ def create_alexnet_RDM_dict(**kwargs):
     # Get AlexNet's layers RDMs
     num_layers = model.num_layers
     alexnet_RDM_dict = get_alexnet_RDM_dict(num_layers=num_layers, **path_dict)
-    alexnet_RDM_dict_pkl = save_alexnet_RDM_dict(RDM_dict = alexnet_RDM_dict,
-                                               savepath = alexnet_model_dirpath)
+    _ = save_alexnet_RDM_dict(RDM_dict=alexnet_RDM_dict,
+                              savepath=alexnet_model_dirpath)
 
     return alexnet_RDM_dict
 
