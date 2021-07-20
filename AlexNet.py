@@ -379,4 +379,3 @@ def create_alexnet_RDM_dict(**kwargs):
 
 if __name__ == "__main__":
     alexnet_RDM_dict = create_alexnet_RDM_dict()
-    print(alexnet_RDM_dict['layer_1'])

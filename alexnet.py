@@ -313,7 +313,7 @@ def load_alexnet_RDM_dict(**kwargs):
     return alexnet_RDM_dict
 
 
-def main(**kwargs):
+def create_alexnet_RDM_dict(**kwargs):
     """ Creates an instance of AlexNet model class, set it's state to a
     pretrained AlexNet model on ImageNet, get and saves the layers' activations
     for each of the visual stimuli image, and computes the corresponding RDM
@@ -378,4 +378,4 @@ def main(**kwargs):
     return alexnet_RDM_dict
 
 if __name__ == "__main__":
-    alexnet_RDM_dict = main()
+    alexnet_RDM_dict = create_alexnet_RDM_dict()
