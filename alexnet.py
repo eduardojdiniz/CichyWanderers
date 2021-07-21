@@ -201,8 +201,7 @@ def get_alexnet_activations_and_save(model, **kwargs):
         img_filename = os.path.split(image_file)[-1].split(".")[0]
 
         # apply transformations before feeding to model
-        input_img = torch.Tensor(resize_normalize(img).unsqueeze(0),
-                                 requires_grad=True)
+        input_img = torch.tensor(resize_normalize(img).unsqueeze(0))
         if torch.cuda.is_available():
             input_img = input_img.cuda()
         x = model.forward(input_img)
