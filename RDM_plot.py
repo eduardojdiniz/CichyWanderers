@@ -6,9 +6,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-
-def plot_rdm(rdm, percentile=False, rescale=False, pmin=0, pmax=100, stimuli=None,
-             stim_fontsize=12, cmap='viridis', title=None):
+def plot_rdm(rdm, percentile=False, rescale=False, pmin=0, pmax=100,
+             stimuli=None, stim_fontsize=12, cmap='viridis', title=None):
     """
     Plot the RDM
 
@@ -35,14 +34,20 @@ def plot_rdm(rdm, percentile=False, rescale=False, pmin=0, pmax=100, stimuli=Non
     cmap : string Default 'viridis'.
            The matplotlib colormap for RDM
     title : string Default None.
-            The plot title. 
+            The plot title.
     """
 
-    # determine if it has 2 dimensions and if it's a square
-    a, b = np.shape(rdm)
-    if len(np.shape(rdm)) != 2 or a != b:
-        print("Invalid input!")
+    # Determine if RDM has exactly 2 dimensions
+    rdm_dim = len(np.shape(rdm))
+    if rdm_dim == 2:
+        a, b = np.shape(rdm)
+    else:
+        print("\nThe shape of the RDM should be (n_stim, n_stim).\n")
         return None
+
+    # Determine if RDM is square
+    if a != b:
+        print("\nThe shape of the RDM should be (n_stim, n_stim).\n")
 
     # get the number of conditions
     n_stim = rdm.shape[0]
@@ -51,14 +56,13 @@ def plot_rdm(rdm, percentile=False, rescale=False, pmin=0, pmax=100, stimuli=Non
     if n_stim == 2:
         print("The shape of RDM cannot be 2*2, we cannot plot this RDM.")
         return None
-   
-    
+
     rdm = np.tril(rdm) + np.triu(rdm.T, 1)
     rdm = np.nan_to_num(rdm)
-    
+
     vmin = np.percentile(rdm.reshape(-1), pmin)
     vmax = np.percentile(rdm.reshape(-1), pmax)
-    
+
     if percentile:
         v = np.zeros([n_stim * n_stim, 2], dtype=np.float)
         for i in range(n_stim):
@@ -78,7 +82,7 @@ def plot_rdm(rdm, percentile=False, rescale=False, pmin=0, pmax=100, stimuli=Non
         for i in range(n_stim):
             for j in range(n_stim):
                 rdm[i, j] = v[i * n_stim + j, 0]
-                
+
         vmin, vmax = (0, 100)
 
     # rescale the RDM
@@ -104,9 +108,10 @@ def plot_rdm(rdm, percentile=False, rescale=False, pmin=0, pmax=100, stimuli=Non
 
         vmin = np.percentile(rdm.reshape(-1), pmin)
         vmax = np.percentile(rdm.reshape(-1), pmax)
-        
+
     # plot the RDM
-    plt.imshow(rdm, extent=(0, 1, 0, 1), cmap=plt.get_cmap(cmap), clim=(vmin, vmax))
+    plt.imshow(rdm, extent=(0, 1, 0, 1), cmap=plt.get_cmap(cmap),
+               clim=(vmin, vmax))
     cb = plt.colorbar()
     cb.ax.tick_params(labelsize=16)
     font = {'size': 18}
@@ -127,9 +132,10 @@ def plot_rdm(rdm, percentile=False, rescale=False, pmin=0, pmax=100, stimuli=Non
         y = np.arange(1 - 0.5 * step, -0.5 * step, -step)
         plt.xticks(x, stimuli, fontsize=stim_fontsize, rotation=30, ha="right")
         plt.yticks(y, stimuli, fontsize=stim_fontsize)
-        
-    if title: plt.title(title)
-    
+
+    if title:
+        plt.title(title)
+
     plt.show()
 
     return 0
