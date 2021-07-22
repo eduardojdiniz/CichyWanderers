@@ -7,8 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def plot_rdm(rdm, percentile=False, rescale=False, lim=[0, 1], stimuli=None,
-             stim_fontsize=12, cmap=None):
+def plot_rdm(rdm, percentile=False, rescale=False, pmin=0, pmax=100, stimuli=None,
+             stim_fontsize=12, cmap='viridis', title=None):
     """
     Plot the RDM
 
@@ -22,16 +22,20 @@ def plot_rdm(rdm, percentile=False, rescale=False, lim=[0, 1], stimuli=None,
               Rescale the values in RDM or not.
               Here, the maximum-minimum method is used to rescale the values
               except for the values on the diagnal.
-    lim : array or list [min, max], Default [0, 1].
-          The corrs view lims.
+    pmin : float, Default 0.
+           Percentile value to set the min limit for the corrs view.
+    pmax : float, Default 100.
+           Percentile value to set the max limit for the corrs view.
     stimuli : string-array or string-list, Default None.
               The labels of the stimuli for plotting. Stimuli should contain
               n_stim strings. If stimuli=None, the labels of conditions will
               be invisible.
     stim_fontsize : int or float, Default 12.
                     The fontsize of the labels of the stimuli for plotting.
-    cmap : matplotlib colormap. Default None.
-           The colormap for RDM. If cmap=None, the colormap will be 'viridis'.
+    cmap : string Default 'viridis'.
+           The matplotlib colormap for RDM
+    title : string Default None.
+            The plot title. 
     """
 
     # determine if it has 2 dimensions and if it's a square
@@ -47,7 +51,14 @@ def plot_rdm(rdm, percentile=False, rescale=False, lim=[0, 1], stimuli=None,
     if n_stim == 2:
         print("The shape of RDM cannot be 2*2, we cannot plot this RDM.")
         return None
-
+   
+    
+    rdm = np.tril(rdm) + np.triu(rdm.T, 1)
+    rdm = np.nan_to_num(rdm)
+    
+    vmin = np.percentile(rdm.reshape(-1), pmin)
+    vmax = np.percentile(rdm.reshape(-1), pmax)
+    
     if percentile:
         v = np.zeros([n_stim * n_stim, 2], dtype=np.float)
         for i in range(n_stim):
@@ -67,13 +78,8 @@ def plot_rdm(rdm, percentile=False, rescale=False, lim=[0, 1], stimuli=None,
         for i in range(n_stim):
             for j in range(n_stim):
                 rdm[i, j] = v[i * n_stim + j, 0]
-
-        if cmap is None:
-            plt.imshow(rdm, extent=(0, 1, 0, 1), cmap=plt.get_cmap('viridis'),
-                       clim=(0, 100))
-        else:
-            plt.imshow(rdm, extent=(0, 1, 0, 1), cmap=plt.get_cmap(cmap),
-                       clim=(0, 100))
+                
+        vmin, vmax = (0, 100)
 
     # rescale the RDM
     elif rescale:
@@ -96,28 +102,11 @@ def plot_rdm(rdm, percentile=False, rescale=False, lim=[0, 1], stimuli=None,
                         rdm[i, j] = float(
                             (rdm[i, j] - minvalue) / (maxvalue - minvalue))
 
-        # plot the RDM
-        vmin = lim[0]
-        vmax = lim[1]
-        if cmap is None:
-            plt.imshow(rdm, extent=(0, 1, 0, 1), cmap=plt.get_cmap('viridis'),
-                       clim=(vmin, vmax))
-        else:
-            plt.imshow(rdm, extent=(0, 1, 0, 1), cmap=plt.get_cmap(cmap),
-                       clim=(vmin, vmax))
-
-    else:
-        # plot the RDM
-        vmin = lim[0]
-        vmax = lim[1]
-        if cmap is None:
-            plt.imshow(rdm, extent=(0, 1, 0, 1), cmap=plt.get_cmap('viridis'),
-                       clim=(vmin, vmax))
-        else:
-            plt.imshow(rdm, extent=(0, 1, 0, 1), cmap=plt.get_cmap(cmap),
-                       clim=(vmin, vmax))
-
-    # plt.axis("off")
+        vmin = np.percentile(rdm.reshape(-1), pmin)
+        vmax = np.percentile(rdm.reshape(-1), pmax)
+        
+    # plot the RDM
+    plt.imshow(rdm, extent=(0, 1, 0, 1), cmap=plt.get_cmap(cmap), clim=(vmin, vmax))
     cb = plt.colorbar()
     cb.ax.tick_params(labelsize=16)
     font = {'size': 18}
@@ -138,84 +127,9 @@ def plot_rdm(rdm, percentile=False, rescale=False, lim=[0, 1], stimuli=None,
         y = np.arange(1 - 0.5 * step, -0.5 * step, -step)
         plt.xticks(x, stimuli, fontsize=stim_fontsize, rotation=30, ha="right")
         plt.yticks(y, stimuli, fontsize=stim_fontsize)
-
-    plt.show()
-
-    return 0
-
-
-def plot_rdm_withvalue(rdm, lim=[0, 1], value_fontsize=10, stimuli=None,
-                       stim_fontsize=12, cmap=None):
-    """
-    Plot the RDM with values
-
-    Parameters
-    ----------
-    rdm : array or list [n_stim, n_stim]
-          A representational dissimilarity matrix.
-    lim : array or list [min, max], Default [0, 1].
-          The corrs view lims.
-    stim_fontsize : int or float, Default 10.
-                    The fontsize of the values on the RDM.
-    stimuli : string-array or string-list, Default None.
-              The labels of the stimuli for plotting. Stimuli should contain
-              n_stim strings. If stimuli=None, the labels of conditions will
-              be invisible.
-    stim_fontsize : int or float, Default 12.
-                    The fontsize of the labels of the stimuli for plotting.
-    cmap : matplotlib colormap. Default None.
-           The colormap for RDM. If cmap=None, the colormap will be 'Greens'.
-    """
-
-    # determine if it has 2 dimensions and if it's a square
-    a, b = np.shape(rdm)
-    if len(np.shape(rdm)) != 2 or a != b:
-        print("Invalid input!")
-        return None
-
-    # get the number of conditions
-    n_stim = rdm.shape[0]
-
-    # if n_stim=2, the RDM cannot be plotted.
-    if n_stim == 2:
-        print("The shape of RDM cannot be 2*2, we cannot plot this RDM.")
-        return None
-
-    # plot the RDM
-    vmin = lim[0]
-    vmax = lim[1]
-    if cmap is None:
-        plt.imshow(rdm, extent=(0, 1, 0, 1), cmap=plt.get_cmap('Greens'),
-                   clim=(vmin, vmax))
-    else:
-        plt.imshow(rdm, extent=(0, 1, 0, 1), cmap=plt.get_cmap(cmap),
-                   clim=(vmin, vmax))
-
-    # plt.axis("off")
-    cb = plt.colorbar()
-    cb.ax.tick_params(labelsize=16)
-    font = {'size': 18}
-    cb.set_label("Dissimilarity", fontdict=font)
-
-    # add values
-    step = float(1 / n_stim)
-    for i in range(n_stim):
-        for j in range(n_stim):
-            print(i, j)
-            _ = plt.text(i * step + 0.5 * step, 1 - j * step - 0.5 * step,
-                         float('%.4f' % rdm[i, j]), ha="center", va="center",
-                         color="blue", fontsize=value_fontsize)
-
-    if stimuli is None:
-        plt.axis("off")
-    else:
-        print("1")
-        step = float(1 / n_stim)
-        x = np.arange(0.5 * step, 1 + 0.5 * step, step)
-        y = np.arange(1 - 0.5 * step, -0.5 * step, -step)
-        plt.xticks(x, stimuli, fontsize=stim_fontsize, rotation=30, ha="right")
-        plt.yticks(y, stimuli, fontsize=stim_fontsize)
-
+        
+    if title: plt.title(title)
+    
     plt.show()
 
     return 0
