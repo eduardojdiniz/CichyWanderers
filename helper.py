@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # coding=utf-8
 
+import sys
 import numpy as np
 from scipy.stats import percentileofscore
 from scipy.stats import spearmanr, pearsonr, kendalltau
 from sklearn import preprocessing
+
 
 def to_percentile(RDM):
     """
@@ -153,6 +155,7 @@ def permutation_test(x, c, metric='mean', n_iter=10000):
         perm_c = shuffled_pool[-c_len:]
         perm_metric = metrics[metric](perm_x, perm_c)
         perm_metrics.append(perm_metrics)
+        print(i)
 
     # How many times we observed a value smaller than our measured value?
     votes_count = len(np.where(np.array(perm_metrics) < measured_metric))
@@ -160,6 +163,13 @@ def permutation_test(x, c, metric='mean', n_iter=10000):
     p = 1.0 - ( float(votes_count)/float(n_iter) )
 
     return p
+
+def show_progressbar(string, current, total=100):
+
+    percent = '{:.2%}'.format(current / total)
+    sys.stdout.write('\r')
+    sys.stdout.write(string + ": [%-100s] %s" % ('=' * int(current), percent))
+    sys.stdout.flush()
 
 def create_coding_model_RDM(stim_mask):
     coding_model_RDM = np.ones()

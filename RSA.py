@@ -4,7 +4,7 @@
 import numpy as np
 from tqdm import tqdm, trange
 from scipy.stats import spearmanr, pearsonr, kendalltau
-from helper import rescale, permutation_test
+from helper import rescale, permutation_test, show_progressbar
 
 
 def RSA(model_RDM, data_RDM, metric="spearman", rescale=False,
@@ -107,8 +107,13 @@ def RSA(model_RDM, data_RDM, metric="spearman", rescale=False,
 
     # Computing the Similarities
     print("\nComputing similarities")
-    for i in trange(n_subjects):
-        for t in trange(n_timepoints):
+    for i in range(n_subjects):
+        for t in range(n_timepoints):
+            print(t)
+            # show the progressbar
+            percent = (i * n_timepoints + t) / total * 100
+            show_progressbar("Calculating", percent)
+
             RDM = np.triu(data_RDM[i, t]).reshape(-1)
 
             if rescale:
